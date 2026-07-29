@@ -141,12 +141,12 @@ VIDEO_ORDER = ["dino-1", "dino-2", "sea", "machine", "emergency", "shapes",
 # 영상별 인스타 릴스 주소. 적어두면 영상 아래 '릴스 보기' 버튼이 생깁니다.
 # 주소를 안 적은 영상은 버튼이 안 나옵니다.
 VIDEO_LINK = {
-    "dino-1": "",
-    "dino-2": "",
-    "sea": "",
-    "machine": "",
-    "emergency": "",
-    "shapes": "",
+    "dino-1":    "https://www.instagram.com/reel/DNPpf1bz_v-/",   # 공룡 그리기 1탄
+    "dino-2":    "https://www.instagram.com/reel/DNfq3f4TeqT/",   # 공룡 그리기 2탄
+    "sea":       "https://www.instagram.com/reel/DNxtkn05rvV/",   # 바다동물 그리기
+    "machine":   "https://www.instagram.com/reel/DOIWJc1Ew9D/",   # 중장비 그리기
+    "emergency": "https://www.instagram.com/reel/DOf3FNkE4g8/",   # 경찰차 · 구급차 · 소방차
+    "shapes":    "https://www.instagram.com/reel/DQZEiuwkq7h/",   # 도형으로 그리기
 }
 
 
