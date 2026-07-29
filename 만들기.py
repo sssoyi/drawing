@@ -138,6 +138,17 @@ VIDEO_LABEL = {
 VIDEO_ORDER = ["dino-1", "dino-2", "sea", "machine", "emergency", "shapes",
                "공룡1", "공룡2", "바다동물", "중장비", "경찰차소방차", "도형"]
 
+# 영상별 인스타 릴스 주소. 적어두면 영상 아래 '릴스 보기' 버튼이 생깁니다.
+# 주소를 안 적은 영상은 버튼이 안 나옵니다.
+VIDEO_LINK = {
+    "dino-1": "",
+    "dino-2": "",
+    "sea": "",
+    "machine": "",
+    "emergency": "",
+    "shapes": "",
+}
+
 
 def nfc(s):
     """맥은 파일명을 자모 분리(NFD)로 돌려줘서, 비교/표시 전에 합쳐준다."""
@@ -346,12 +357,16 @@ vids.sort(key=lambda f: (VIDEO_ORDER.index(nfc(os.path.splitext(f)[0]))
                          if nfc(os.path.splitext(f)[0]) in VIDEO_ORDER else 99,
                          natural_key(f)))
 
-cards = []
+cards, vid_bytes = [], 0
 for f in vids:
     stem = nfc(os.path.splitext(f)[0])
     poster = os.path.join(POSTER_DIR, stem + ".jpg")
     pos = ' poster="%s"' % data_uri(poster) if os.path.exists(poster) else ""
     label = html.escape(VIDEO_LABEL.get(stem, stem))
+    vid_bytes += os.path.getsize(os.path.join(vid_base, f))
+    reels = VIDEO_LINK.get(stem, "")
+    reel_btn = ('<a class="btn-ghost" href="%s" target="_blank" rel="noopener">릴스 보기</a>'
+                % html.escape(reels)) if reels else ""
     cards.append("""      <article class="clip">
         <div class="vwrap">
           <video controls preload="none" playsinline{pos} data-title="{label}">
@@ -359,7 +374,12 @@ for f in vids:
           </video>
         </div>
         <h3>{label}</h3>
-      </article>""".format(pos=pos, src=quote(prefix) + quote(f), label=label))
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="{src}" download="{dl}">받기</a>
+          {reel}
+        </div>
+      </article>""".format(pos=pos, src=quote(prefix) + quote(f), label=label,
+                          dl=html.escape(label + ".mp4"), reel=reel_btn))
 
 empty_note = "" if sheets else """      <div class="empty">
         <b>아직 도안 이미지가 없어요.</b>
@@ -464,6 +484,8 @@ TPL = r"""<!doctype html>
     font-size:14px; font-weight:500; margin:10px 2px 0;
     word-break:keep-all; overflow-wrap:break-word;
   }
+  .clip-acts { display:flex; gap:6px; margin:8px 2px 0; }
+  .clip-acts .btn-ghost { flex:1; text-align:center; }
 
   .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:28px 24px; }
   .item { margin:0; min-width:0; }   /* 긴 제목이 칸 너비를 밀지 않게 */
@@ -624,6 +646,8 @@ TPL = r"""<!doctype html>
     /* 영상: 한 줄에 3개 썸네일 */
     .clips { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
     .clip video { border-radius:9px; pointer-events:none; }
+    .clip-acts { gap:4px; margin-top:6px; }
+    .clip-acts .btn-ghost { font-size:10.5px; padding:4px 4px; }
     .clip h3 {
       font-size:11.5px; margin:7px 1px 0; line-height:1.35;
       overflow:hidden; display:-webkit-box; -webkit-line-clamp:2;
@@ -697,6 +721,7 @@ TPL = r"""<!doctype html>
     <p>__SUB__</p>
     <div class="tools">
       <button class="btn" id="dl-all">도안 전체 받기 (__COUNT__장)</button>
+      <button class="btn btn-line" id="dl-vids">영상 전체 받기 (__VCOUNT__개 · __VSIZE__)</button>
     </div>
   </header>
 
@@ -832,7 +857,8 @@ __F_STEPS__
   }
 
   document.querySelectorAll('.clip').forEach(function (clip) {
-    clip.addEventListener('click', function () {
+    clip.addEventListener('click', function (ev) {
+      if (ev.target.closest('.clip-acts')) return;   // 받기·릴스 버튼은 그대로 두기
       if (!small.matches) return;              // 넓은 화면은 원래대로 인라인 재생
       var v = clip.querySelector('video');
       var s = v.querySelector('source');
@@ -908,6 +934,55 @@ __F_STEPS__
   // 육아 동지에게 공유하기
   // 휴대폰처럼 기기 공유창을 쓸 수 있으면 그걸 띄우고,
   // 그럴 수 없는 PC 에서는 직접 만든 목록을 열어 고르게 한다.
+  // 영상 받기 — 휴대폰이면 공유창을 띄워 사진 앱에 담을 수 있게 한다
+  document.querySelectorAll('a.vdl').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      if (!navigator.canShare) return;              // 안 되면 그냥 내려받기
+      e.preventDefault();
+      var old = a.textContent;
+      a.textContent = '준비 중…';
+      fetch(a.getAttribute('href'))
+        .then(function (r) { return r.blob(); })
+        .then(function (b) {
+          var file = new File([b], a.getAttribute('download'), { type: 'video/mp4' });
+          if (!navigator.canShare({ files: [file] })) throw 0;
+          return navigator.share({ files: [file] });
+        })
+        .catch(function () {
+          var l = document.createElement('a');       // 공유가 안 되면 내려받기로
+          l.href = a.getAttribute('href');
+          l.download = a.getAttribute('download');
+          document.body.appendChild(l); l.click(); l.remove();
+        })
+        .then(function () { a.textContent = old; });
+    });
+  });
+
+  // 영상 전체 받기 — 84MB 를 한 덩어리로 묶으면 휴대폰이 버거워서 하나씩 순서대로 내려받는다
+  var vidBtn = document.getElementById('dl-vids');
+  if (vidBtn) vidBtn.addEventListener('click', function () {
+    var links = [].slice.call(document.querySelectorAll('a.vdl'));
+    if (!links.length) { toast('받을 영상이 없어요'); return; }
+    vidBtn.disabled = true;
+    var label = vidBtn.textContent;
+    links.forEach(function (src, i) {
+      setTimeout(function () {
+        var a = document.createElement('a');
+        a.href = src.getAttribute('href');
+        a.download = src.getAttribute('download');
+        document.body.appendChild(a); a.click(); a.remove();
+        vidBtn.textContent = '저장 중… (' + (i + 1) + '/' + links.length + ')';
+        if (i === links.length - 1) {
+          setTimeout(function () {
+            vidBtn.disabled = false;
+            vidBtn.textContent = label;
+            toast(links.length + '개를 모두 저장했어요');
+          }, 900);
+        }
+      }, i * 900);
+    });
+  });
+
   var shareBtn = document.getElementById('share-page');
   var shareMenu = document.getElementById('share-menu');
   var SHARE_TEXT = '아이랑 바로 출력해서 놀 수 있는 그림 도안 나눔이에요!';
@@ -1003,6 +1078,8 @@ page = (TPL
         .replace("__TITLE__", html.escape(PAGE_TITLE))
         .replace("__SUB__", PAGE_SUB)
         .replace("__COUNT__", str(len(by_title)))
+        .replace("__VCOUNT__", str(len(cards)))
+        .replace("__VSIZE__", "%.0fMB" % (vid_bytes / 1024 / 1024))
         .replace("__CARDS__", "\n".join(cards))
         .replace("__SHEETS__", "\n".join(sheets))
         .replace("__EMPTY__", empty_note)

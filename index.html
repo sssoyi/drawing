@@ -92,6 +92,8 @@
     font-size:14px; font-weight:500; margin:10px 2px 0;
     word-break:keep-all; overflow-wrap:break-word;
   }
+  .clip-acts { display:flex; gap:6px; margin:8px 2px 0; }
+  .clip-acts .btn-ghost { flex:1; text-align:center; }
 
   .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:28px 24px; }
   .item { margin:0; min-width:0; }   /* 긴 제목이 칸 너비를 밀지 않게 */
@@ -252,6 +254,8 @@
     /* 영상: 한 줄에 3개 썸네일 */
     .clips { grid-template-columns:repeat(3,minmax(0,1fr)); gap:9px; }
     .clip video { border-radius:9px; pointer-events:none; }
+    .clip-acts { gap:4px; margin-top:6px; }
+    .clip-acts .btn-ghost { font-size:10.5px; padding:4px 4px; }
     .clip h3 {
       font-size:11.5px; margin:7px 1px 0; line-height:1.35;
       overflow:hidden; display:-webkit-box; -webkit-line-clamp:2;
@@ -325,6 +329,7 @@
     <p><span class="cats">공룡 · 바다동물 · 중장비 · 긴급차량 · 도형</span>고민 없이 바로 출력해서 놀아주는 엄마표 그림놀이!<br>릴스 영상 보며 따라 그리면 더 재미있어요.</p>
     <div class="tools">
       <button class="btn" id="dl-all">도안 전체 받기 (23장)</button>
+      <button class="btn btn-line" id="dl-vids">영상 전체 받기 (6개 · 82MB)</button>
     </div>
   </header>
 
@@ -338,6 +343,10 @@
           </video>
         </div>
         <h3>공룡 그리기 1탄</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/dino-1.mp4" download="공룡 그리기 1탄.mp4">받기</a>
+          
+        </div>
       </article>
       <article class="clip">
         <div class="vwrap">
@@ -346,6 +355,10 @@
           </video>
         </div>
         <h3>공룡 그리기 2탄</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/dino-2.mp4" download="공룡 그리기 2탄.mp4">받기</a>
+          
+        </div>
       </article>
       <article class="clip">
         <div class="vwrap">
@@ -354,6 +367,10 @@
           </video>
         </div>
         <h3>바다동물 그리기</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/sea.mp4" download="바다동물 그리기.mp4">받기</a>
+          
+        </div>
       </article>
       <article class="clip">
         <div class="vwrap">
@@ -362,6 +379,10 @@
           </video>
         </div>
         <h3>중장비 그리기</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/machine.mp4" download="중장비 그리기.mp4">받기</a>
+          
+        </div>
       </article>
       <article class="clip">
         <div class="vwrap">
@@ -370,6 +391,10 @@
           </video>
         </div>
         <h3>경찰차 · 구급차 · 소방차</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/emergency.mp4" download="경찰차 · 구급차 · 소방차.mp4">받기</a>
+          
+        </div>
       </article>
       <article class="clip">
         <div class="vwrap">
@@ -378,6 +403,10 @@
           </video>
         </div>
         <h3>도형으로 그리기</h3>
+        <div class="clip-acts">
+          <a class="btn-ghost vdl" href="%EC%98%81%EC%83%81/shapes.mp4" download="도형으로 그리기.mp4">받기</a>
+          
+        </div>
       </article>
     </div>
   </section>
@@ -674,7 +703,8 @@
   }
 
   document.querySelectorAll('.clip').forEach(function (clip) {
-    clip.addEventListener('click', function () {
+    clip.addEventListener('click', function (ev) {
+      if (ev.target.closest('.clip-acts')) return;   // 받기·릴스 버튼은 그대로 두기
       if (!small.matches) return;              // 넓은 화면은 원래대로 인라인 재생
       var v = clip.querySelector('video');
       var s = v.querySelector('source');
@@ -750,6 +780,55 @@
   // 육아 동지에게 공유하기
   // 휴대폰처럼 기기 공유창을 쓸 수 있으면 그걸 띄우고,
   // 그럴 수 없는 PC 에서는 직접 만든 목록을 열어 고르게 한다.
+  // 영상 받기 — 휴대폰이면 공유창을 띄워 사진 앱에 담을 수 있게 한다
+  document.querySelectorAll('a.vdl').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      if (!navigator.canShare) return;              // 안 되면 그냥 내려받기
+      e.preventDefault();
+      var old = a.textContent;
+      a.textContent = '준비 중…';
+      fetch(a.getAttribute('href'))
+        .then(function (r) { return r.blob(); })
+        .then(function (b) {
+          var file = new File([b], a.getAttribute('download'), { type: 'video/mp4' });
+          if (!navigator.canShare({ files: [file] })) throw 0;
+          return navigator.share({ files: [file] });
+        })
+        .catch(function () {
+          var l = document.createElement('a');       // 공유가 안 되면 내려받기로
+          l.href = a.getAttribute('href');
+          l.download = a.getAttribute('download');
+          document.body.appendChild(l); l.click(); l.remove();
+        })
+        .then(function () { a.textContent = old; });
+    });
+  });
+
+  // 영상 전체 받기 — 84MB 를 한 덩어리로 묶으면 휴대폰이 버거워서 하나씩 순서대로 내려받는다
+  var vidBtn = document.getElementById('dl-vids');
+  if (vidBtn) vidBtn.addEventListener('click', function () {
+    var links = [].slice.call(document.querySelectorAll('a.vdl'));
+    if (!links.length) { toast('받을 영상이 없어요'); return; }
+    vidBtn.disabled = true;
+    var label = vidBtn.textContent;
+    links.forEach(function (src, i) {
+      setTimeout(function () {
+        var a = document.createElement('a');
+        a.href = src.getAttribute('href');
+        a.download = src.getAttribute('download');
+        document.body.appendChild(a); a.click(); a.remove();
+        vidBtn.textContent = '저장 중… (' + (i + 1) + '/' + links.length + ')';
+        if (i === links.length - 1) {
+          setTimeout(function () {
+            vidBtn.disabled = false;
+            vidBtn.textContent = label;
+            toast(links.length + '개를 모두 저장했어요');
+          }, 900);
+        }
+      }, i * 900);
+    });
+  });
+
   var shareBtn = document.getElementById('share-page');
   var shareMenu = document.getElementById('share-menu');
   var SHARE_TEXT = '아이랑 바로 출력해서 놀 수 있는 그림 도안 나눔이에요!';
