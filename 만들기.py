@@ -108,7 +108,7 @@ ENGLISH = {
     "구급차": "Ambulance",
     "소방차": "Fire Truck",
     "기차": "Train",
-    "배": "Boat",
+    "배": "Ship",
     "비행기": "Airplane",
     "자전거": "Bicycle",
 }
@@ -412,6 +412,12 @@ TPL = r"""<!doctype html>
   }
   .wrap { max-width:1080px; margin:0 auto; padding:0 20px 80px; }
 
+  /* 화면 맨 위를 마감하는 얇은 띠. 스크롤해도 그대로 남아 종이의 위쪽 테두리 역할을 한다. */
+  .topbar {
+    position:fixed; top:0; left:0; right:0; height:3px;
+    background:var(--accent); z-index:40;   /* 전체화면 뷰어(50)보다는 아래 */
+  }
+
   header { padding:64px 0 40px; text-align:center; }
   .page-title {
     display:flex; flex-direction:column; align-items:center; gap:19px;
@@ -640,7 +646,7 @@ TPL = r"""<!doctype html>
 
   @media (max-width:860px) {
     .wrap { padding:0 14px 60px; }
-    header { padding:36px 0 24px; }
+    header { padding:44px 0 24px; }   /* 띠 아래로 말풍선이 숨 쉴 만큼 */
     .page-title { gap:15px; margin-bottom:12px; }
     .page-title .eyebrow { font-size:15.5px; border-width:1.6px; }
     .page-title .eyebrow::after { width:11px; height:11px; bottom:-7px;
@@ -706,7 +712,7 @@ TPL = r"""<!doctype html>
   @page { size:A4; margin:0; }
   @media print {
     body { background:#fff; }
-    header, .tools, #videos, #funnel, footer, figcaption, #toast { display:none !important; }
+    .topbar, header, .tools, #videos, #funnel, footer, figcaption, #toast { display:none !important; }
     .wrap { max-width:none; padding:0; }
     section { margin:0; }
     h2 { display:none; }
@@ -719,6 +725,8 @@ TPL = r"""<!doctype html>
     .group { display:none; }
   }
 </style>
+
+<div class="topbar"></div>
 
 <div class="wrap">
   <header>
