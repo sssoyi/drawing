@@ -33,6 +33,9 @@ PAGE_TITLE = (TITLE_TOP + " " + TITLE_MAIN).replace("*", "")  # 브라우저 탭
 PAGE_SUB = ('<span class="cats">공룡 · 바다동물 · 중장비 · 긴급차량 · 도형</span>'
             "고민 없이 바로 출력해서 놀아주는 엄마표 그림놀이!<br>"
             "릴스 영상 보며 따라 그리면 더 재미있어요.")
+# 섹션 제목 옆 작은 안내
+VIDEO_HINT = "영상을 누르면 재생됩니다"
+
 CREDIT = "@luckyyy.mommy"
 # 맨 아래 저작권 문구. " | " 자리에서 줄이 바뀝니다.
 COPYRIGHT = "ⓒ 2026 luckyyy.mommy. All rights reserved."
@@ -470,6 +473,10 @@ TPL = r"""<!doctype html>
     font-size:14px; font-weight:600; letter-spacing:.02em; margin:0 0 20px;
     padding-bottom:12px; border-bottom:1px solid var(--line); color:var(--muted);
   }
+  h2 .hint {
+    font-weight:400; letter-spacing:0; opacity:.72; margin-left:5px;
+    word-break:keep-all;
+  }
   section { margin-top:56px; }
 
   .clips { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:22px; }
@@ -661,6 +668,7 @@ TPL = r"""<!doctype html>
       filter:drop-shadow(0 1px 4px rgba(0,0,0,.55));
     }
 
+    h2 .hint { display:block; margin:3px 0 0; font-size:12px; }
     #funnel { margin-top:48px; padding-top:32px; }
     .funnel { grid-template-columns:1fr; row-gap:22px; }
     .funnel-title, .steps, .funnel-note, .funnel-btns {
@@ -726,7 +734,7 @@ TPL = r"""<!doctype html>
   </header>
 
   <section id="videos">
-    <h2>영상 보고 따라 그리기</h2>
+    <h2>영상 보고 따라 그리기 <span class="hint">__VHINT__</span></h2>
     <div class="clips">
 __CARDS__
     </div>
@@ -1083,6 +1091,7 @@ page = (TPL
         .replace("__CARDS__", "\n".join(cards))
         .replace("__SHEETS__", "\n".join(sheets))
         .replace("__EMPTY__", empty_note)
+        .replace("__VHINT__", "(%s)" % html.escape(VIDEO_HINT))
         .replace("__CREDIT__", html.escape(CREDIT))
         .replace("__COPYRIGHT__", html.escape(COPYRIGHT))
         .replace("__TERMS__", "<br>".join(html.escape(t.strip())
