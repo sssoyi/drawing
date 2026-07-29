@@ -18,6 +18,6 @@ fi
 
 echo
 echo "완료! 1~2분 뒤 아래 주소에 반영됩니다."
-echo "https://sssoyi.github.io/luckymommy-doan/"
+echo "https://sssoyi.github.io/drawing/"
 echo
 echo "이 창은 닫으셔도 됩니다."
