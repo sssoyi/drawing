@@ -961,43 +961,112 @@ __F_STEPS__
         .then(function (r) { return r.blob(); })
         .then(function (b) {
           var file = new File([b], a.getAttribute('download'), { type: 'video/mp4' });
-          if (!navigator.canShare({ files: [file] })) throw 0;
+          // 파일 공유 자체를 못 하는 기기(주로 PC)는 내려받기로 되돌린다
+          if (!navigator.canShare({ files: [file] })) throw { name: 'NoFileShare' };
           return navigator.share({ files: [file] });
         })
-        .catch(function () {
-          var l = document.createElement('a');       // 공유가 안 되면 내려받기로
-          l.href = a.getAttribute('href');
-          l.download = a.getAttribute('download');
-          document.body.appendChild(l); l.click(); l.remove();
+        .catch(function (err) {
+          var name = err && err.name;
+          if (name === 'AbortError') return;           // 사용자가 공유창을 닫은 것
+          if (name === 'NoFileShare') {
+            var l = document.createElement('a');
+            l.href = a.getAttribute('href');
+            l.download = a.getAttribute('download');
+            document.body.appendChild(l); l.click(); l.remove();
+            return;
+          }
+          // 사파리에서 링크로 영상을 열면 저장이 아니라 재생으로 빠지므로,
+          // 공유창이 실패했을 때 내려받기로 되돌리지 않고 방법을 알려준다.
+          toast('저장이 안 됐어요. 영상을 길게 눌러 저장해 주세요');
         })
         .then(function () { a.textContent = old; });
     });
   });
 
-  // 영상 전체 받기 — 84MB 를 한 덩어리로 묶으면 휴대폰이 버거워서 하나씩 순서대로 내려받는다
+  // 영상 전체 받기
+  // 아이폰 사파리는 링크를 눌러도 영상이 저장되지 않고 그냥 재생돼 버린다.
+  // 그래서 공유창을 쓸 수 있는 기기에서는 두 번 눌러 받는다.
+  // (iOS 는 사용자가 누른 직후에만 공유창을 허용해서, 영상을 다 불러온 뒤 띄우면 막힌다.
+  //  그래서 첫 번째 탭에서 불러오기만 하고, 두 번째 탭에서 공유창을 띄운다.)
   var vidBtn = document.getElementById('dl-vids');
-  if (vidBtn) vidBtn.addEventListener('click', function () {
-    var links = [].slice.call(document.querySelectorAll('a.vdl'));
-    if (!links.length) { toast('받을 영상이 없어요'); return; }
-    vidBtn.disabled = true;
-    var label = vidBtn.textContent;
-    links.forEach(function (src, i) {
-      setTimeout(function () {
-        var a = document.createElement('a');
-        a.href = src.getAttribute('href');
-        a.download = src.getAttribute('download');
-        document.body.appendChild(a); a.click(); a.remove();
-        vidBtn.textContent = '저장 중… (' + (i + 1) + '/' + links.length + ')';
-        if (i === links.length - 1) {
-          setTimeout(function () {
-            vidBtn.disabled = false;
-            vidBtn.textContent = label;
-            toast(links.length + '개를 모두 저장했어요');
-          }, 900);
+  if (vidBtn) {
+    var vidLabel = vidBtn.textContent;
+    var vidFiles = null;                 // 불러와 둔 영상들. 두 번째 탭에서 쓴다
+
+    function readyLabel(n) { return '사진 앱에 담기 (' + n + '개)'; }
+
+    // PC — 예전 방식대로 하나씩 순서대로 내려받는다 (한 덩어리로 묶으면 버거워서)
+    function downloadAll(links) {
+      vidBtn.disabled = true;
+      links.forEach(function (src, i) {
+        setTimeout(function () {
+          var a = document.createElement('a');
+          a.href = src.getAttribute('href');
+          a.download = src.getAttribute('download');
+          document.body.appendChild(a); a.click(); a.remove();
+          vidBtn.textContent = '저장 중… (' + (i + 1) + '/' + links.length + ')';
+          if (i === links.length - 1) {
+            setTimeout(function () {
+              vidBtn.disabled = false;
+              vidBtn.textContent = vidLabel;
+              toast(links.length + '개를 모두 저장했어요');
+            }, 900);
+          }
+        }, i * 900);
+      });
+    }
+
+    // 휴대폰 — 영상을 하나씩 차례로 불러온다 (한꺼번에 받으면 메모리가 버겁다)
+    function loadAll(links) {
+      var files = [];
+      return links.reduce(function (chain, a, i) {
+        return chain.then(function () {
+          vidBtn.textContent = '불러오는 중… (' + (i + 1) + '/' + links.length + ')';
+          return fetch(a.getAttribute('href'))
+            .then(function (r) { return r.blob(); })
+            .then(function (b) {
+              files.push(new File([b], a.getAttribute('download'), { type: 'video/mp4' }));
+            });
+        });
+      }, Promise.resolve()).then(function () { return files; });
+    }
+
+    vidBtn.addEventListener('click', function () {
+      var links = [].slice.call(document.querySelectorAll('a.vdl'));
+      if (!links.length) { toast('받을 영상이 없어요'); return; }
+      // 손가락으로 쓰는 기기에서만 공유창 방식. PC 는 예전처럼 바로 내려받는다
+      var phone = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+      if (!phone || !navigator.canShare) { downloadAll(links); return; }
+
+      if (vidFiles) {                    // 두 번째 탭 — 바로 공유창을 띄운다
+        navigator.share({ files: vidFiles })
+          .then(function () { toast('사진 앱에 담았어요'); })
+          .catch(function (err) {
+            if (!err || err.name !== 'AbortError') {
+              toast('저장이 안 됐어요. 영상을 하나씩 받아주세요');
+            }
+          });
+        return;
+      }
+
+      vidBtn.disabled = true;
+      loadAll(links).then(function (files) {
+        if (!navigator.canShare({ files: files })) {   // 파일 공유를 못 하면 내려받기로
+          vidBtn.textContent = vidLabel;
+          downloadAll(links);
+          return;
         }
-      }, i * 900);
+        vidFiles = files;
+        vidBtn.disabled = false;
+        vidBtn.textContent = readyLabel(files.length);
+        toast('준비됐어요. 한 번 더 눌러주세요');
+      }).catch(function () {
+        vidBtn.disabled = false;
+        vidBtn.textContent = vidLabel;
+        toast('영상을 불러오지 못했어요. 하나씩 받아주세요');
+      });
     });
-  });
+  }
 
   var shareBtn = document.getElementById('share-page');
   var shareMenu = document.getElementById('share-menu');
