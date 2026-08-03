@@ -160,6 +160,16 @@ VIDEO_LINK = {
     "shapes":    "https://www.instagram.com/reel/DOf3FNkE4g8/",   # 도형으로 그리기
 }
 
+# 같은 그림을 천천히 그리는 영상 주소. 적어두면 '천천히 보기' 버튼이 하나 더 생깁니다.
+VIDEO_SLOW = {
+    "dino-1":    "https://www.instagram.com/p/DNzvUwxZoUP/",      # 공룡 그리기 1탄
+    "dino-2":    "https://www.instagram.com/p/DQfid8aEz4I/",      # 공룡 그리기 2탄
+    "sea":       "https://www.instagram.com/p/DOK2rhrk-59/",      # 바다동물 그리기
+    "machine":   "https://www.instagram.com/p/DNQOlb-ztGO/",      # 중장비 그리기
+    "emergency": "https://www.instagram.com/p/DNhe0I3zvBv/",      # 경찰차 · 구급차 · 소방차
+    "shapes":    "https://www.instagram.com/p/DOkYFAgk7vz/",      # 도형 · 탈것
+}
+
 
 def nfc(s):
     """맥은 파일명을 자모 분리(NFD)로 돌려줘서, 비교/표시 전에 합쳐준다."""
@@ -378,6 +388,10 @@ for f in vids:
     reels = VIDEO_LINK.get(stem, "")
     reel_btn = ('<a class="btn-ghost" href="%s" target="_blank" rel="noopener">릴스 보기</a>'
                 % html.escape(reels)) if reels else ""
+    slow = VIDEO_SLOW.get(stem, "")
+    # 한 칸을 통째로 쓰게 해서 좁은 화면에서도 글씨가 안 눌린다.
+    slow_btn = ('<a class="btn-ghost wide" href="%s" target="_blank" rel="noopener">'
+                '천천히 보기</a>' % html.escape(slow)) if slow else ""
     cards.append("""      <article class="clip">
         <div class="vwrap">
           <video controls preload="none" playsinline{pos} data-title="{label}">
@@ -388,9 +402,11 @@ for f in vids:
         <div class="clip-acts">
           <a class="btn-ghost vdl" href="{src}" download="{dl}">받기</a>
           {reel}
+          {slow}
         </div>
       </article>""".format(pos=pos, src=quote(prefix) + quote(f), label=label,
-                          dl=html.escape(label + ".mp4"), reel=reel_btn))
+                          dl=html.escape(label + ".mp4"), reel=reel_btn,
+                          slow=slow_btn))
 
 empty_note = "" if sheets else """      <div class="empty">
         <b>아직 도안 이미지가 없어요.</b>
@@ -536,8 +552,10 @@ TPL = r"""<!doctype html>
     font-size:14px; font-weight:500; margin:10px 2px 0;
     word-break:keep-all; overflow-wrap:break-word;
   }
-  .clip-acts { display:flex; gap:6px; margin:8px 2px 0; }
+  .clip-acts { display:flex; flex-wrap:wrap; gap:6px; margin:8px 2px 0; }
   .clip-acts .btn-ghost { flex:1; text-align:center; }
+  /* '천천히 보기'는 아랫줄을 통째로 쓴다. 세 개를 한 줄에 밀어넣으면 글씨가 눌린다. */
+  .clip-acts .btn-ghost.wide { flex-basis:100%; }
 
   .grid { display:grid; grid-template-columns:repeat(2,1fr); gap:28px 24px; }
   .item { margin:0; min-width:0; }   /* 긴 제목이 칸 너비를 밀지 않게 */
