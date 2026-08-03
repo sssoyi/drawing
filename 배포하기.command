@@ -4,6 +4,7 @@ cd "$(dirname "$0")" || exit 1
 
 echo "1) 페이지 만드는 중…"
 python3 만들기.py || { echo "실패했어요."; read -n 1 -s; exit 1; }
+python3 표지만들기.py || { echo "표지 만들기 실패."; read -n 1 -s; exit 1; }
 
 echo
 echo "2) 올리는 중…"

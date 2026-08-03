@@ -37,6 +37,14 @@ PAGE_SUB = ('<span class="cats">공룡 · 바다동물 · 중장비 · 긴급차
 VIDEO_HINT = "영상을 누르면 재생됩니다"
 
 CREDIT = "@luckyyy.mommy"
+
+# 링크를 카톡·DM·문자에 붙여넣었을 때 뜨는 미리보기.
+# 표지 그림은 '표지만들기.py' 로 만듭니다 (og.png).
+PAGE_URL = "https://luckyyymommy.com/drawing/"
+OG_IMAGE = PAGE_URL + "og.png"
+OG_VERSION = "1"   # 표지를 새로 만들면 이 숫자를 올리세요. 카톡이 옛 그림을 계속 물고 있습니다.
+OG_DESC = ("공룡 · 바다동물 · 중장비 · 긴급차량 · 도형 도안을 무료로 나눕니다. "
+           "바로 출력해서 아이와 함께 그려보세요.")
 # 맨 아래 저작권 문구. " | " 자리에서 줄이 바뀝니다.
 COPYRIGHT = "ⓒ 2026 luckyyy.mommy. All rights reserved."
 TERMS = ("도안은 마음껏 출력해서 아이와 즐겁게 사용해 주세요. | "
@@ -398,6 +406,20 @@ TPL = r"""<!doctype html>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>__TITLE__</title>
+<meta name="description" content="__OG_DESC__">
+<link rel="canonical" href="__PAGE_URL__">
+<!-- 링크 미리보기(카톡·인스타 DM·페북·문자). 주소는 반드시 전체 주소여야 합니다. -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="럭키마미">
+<meta property="og:locale" content="ko_KR">
+<meta property="og:url" content="__PAGE_URL__">
+<meta property="og:title" content="__TITLE__">
+<meta property="og:description" content="__OG_DESC__">
+<meta property="og:image" content="__OG_IMAGE__">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="__TITLE__">
+<meta name="twitter:card" content="summary_large_image">
 <style>
   :root {
     --ink:#1c1a17; --muted:#8b8478; --line:#e6e1d8;
@@ -1178,6 +1200,9 @@ page = (TPL
             r"\*(.+?)\*", r'<em class="mark">\1</em>', html.escape(TITLE_TOP)))
         .replace("__TITLE_MAIN__", html.escape(TITLE_MAIN))
         .replace("__TITLE__", html.escape(PAGE_TITLE))
+        .replace("__PAGE_URL__", html.escape(PAGE_URL))
+        .replace("__OG_IMAGE__", html.escape(OG_IMAGE + "?v=" + OG_VERSION))
+        .replace("__OG_DESC__", html.escape(OG_DESC))
         .replace("__SUB__", PAGE_SUB)
         .replace("__COUNT__", str(len(by_title)))
         .replace("__VCOUNT__", str(len(cards)))
