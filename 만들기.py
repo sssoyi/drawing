@@ -42,7 +42,7 @@ CREDIT = "@luckyyy.mommy"
 # 표지 그림은 '표지만들기.py' 로 만듭니다 (og.png).
 PAGE_URL = "https://luckyyymommy.com/drawing/"
 OG_IMAGE = PAGE_URL + "og.png"
-OG_VERSION = "2"   # 표지를 새로 만들면 이 숫자를 올리세요. 카톡이 옛 그림을 계속 물고 있습니다.
+OG_VERSION = "3"   # 표지를 새로 만들면 이 숫자를 올리세요. 카톡이 옛 그림을 계속 물고 있습니다.
 OG_DESC = ("공룡 · 바다동물 · 중장비 · 긴급차량 · 탈것 도안을 무료로 나눕니다. "
            "바로 출력해서 아이와 함께 그려보세요.")
 # 맨 아래 저작권 문구. " | " 자리에서 줄이 바뀝니다.

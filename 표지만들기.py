@@ -189,7 +189,7 @@ def main():
     # 미리보기 상자는 모서리가 둥글게 잘리므로, 띠는 위가 아니라 아래에 둔다.
     d.rectangle([0, band_y, W * SS, H * SS], fill=ACCENT)
     on_band = mix(BG, ACCENT, 0.06)          # 띠 위 글자색 (순백보다 부드럽게)
-    on_band_dim = mix(BG, ACCENT, 0.42)
+    on_band_dim = mix(BG, ACCENT, 0.18)   # 너무 흐리면 이 숫자를 낮추세요 (0 이면 계정과 같은 밝기)
 
     f_handle = font(28, "semibold")
     htop, hbot = cap_box(d, HANDLE, f_handle)
@@ -197,7 +197,7 @@ def main():
     hy = band_y + (BAND_H * SS - (hbot - htop)) / 2 - htop
     draw_ls(d, (x0, hy), HANDLE, f_handle, on_band)
 
-    f_tag = font(25)
+    f_tag = font(25, "medium")
     gtop, gbot = cap_box(d, TAGLINE, f_tag)
     tag_w = text_w(d, TAGLINE, f_tag)
     gy = (hy + hbot) - gbot                  # 계정 글자와 밑선을 맞춘다
